@@ -100,68 +100,68 @@ class InstagramBot:
         return usernames
     
     def send_dm(self, usernames, message, delay_time):
+        
         try:
             # Go to the Instagram Direct Inbox
             self.driver.get("https://www.instagram.com/direct/inbox/")
-            time.sleep(3)
+            time.sleep(8)
 
-            # Check if the notification pop-up is displayed
-            notification_popup = self.driver.find_element(By.XPATH, '//div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]')
-            #                                                //div/div/div[3]/div/div/div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]
-            if notification_popup.is_displayed():
-                notification_popup.click()
-                time.sleep(2)
-
-        
-            for username in usernames:
-                try :
-                    msg =  random.choice(message)
-                    # Click the 'New Message' button
-                    new_message_button = self.driver.find_element(By.XPATH, '//div/div/div[2]/div/div/div/div[1]/div[1]/div[2]/section/div/div/div/div[1]/div/div[1]/div/div[1]/div[2]/div/div')
-                    new_message_button.click()
+            try:
+                notification_popup = self.driver.find_element(By.XPATH, '//div[1]/div/div[2]/div/div/div/div/div[2]/div/div/div[3]/button[2]')
+                
+                if notification_popup.is_displayed():
+                    notification_popup.click()
                     time.sleep(2)
+            except:
+                pass
+                
+            try :
+                msg =  random.choice(message)
+                # Click the 'New Message' button        
+                new_message_button = self.driver.find_element(By.XPATH, '//div/*[@aria-label="New message"]')
+                new_message_button.click()
+                time.sleep(2)
+                # Wait for the recipient input field to become available
+                wait = WebDriverWait(self.driver, 10)
+                recipient_input = wait.until(EC.presence_of_element_located((By.XPATH, '//div/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/div/div[2]/input')))
 
-                    # Wait for the recipient input field to become available
-                    wait = WebDriverWait(self.driver, 10)
-                    recipient_input = wait.until(EC.presence_of_element_located((By.XPATH, '//div/div[2]/div/div/div/div/div/div/div[1]/div/div[2]/div/div[2]/input')))
-
-                    # Type each username and press Enter to add as a recipient
-                    recipient_input.send_keys(username)
-                    time.sleep(1)
-                    recipient_input.send_keys(Keys.ENTER)
-                    time.sleep(1)
+                # Type each username and press Enter to add as a recipient
+                recipient_input.send_keys(usernames)
+                time.sleep(1)
+                recipient_input.send_keys(Keys.ENTER)            
+                time.sleep(1)
 
                     
-                    select_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//div/div[1]/div/div[2]/div/div/div/div/div/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div')))
-                    select_button.click()
-                    time.sleep(2)
+                select_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//div/div[1]/div/div[2]/div/div/div/div/div/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div')))
+                select_button.click()
+                time.sleep(2)
 
-                    # Wait for the next button to become clickable
-                    next_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//div/div[1]/div/div[2]/div/div/div/div/div/div/div[1]/div/div[4]/div')))
+                # Wait for the next button to become clickable
+                next_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//div/div[1]/div/div[2]/div/div/div/div/div/div/div[1]/div/div[4]/div')))
 
-                    # Click the Next button to proceed to the message input
-                    next_button.click()
-                    time.sleep(3)
+                # Click the Next button to proceed to the message input
+                next_button.click()
+                time.sleep(3)
 
-                    # Create an instance of ActionChains
-                    actions = ActionChains(self.driver,duration=1000)
-                    actions.send_keys(msg)
-                    actions.send_keys(Keys.RETURN)
-                    # Perform the actions
-                    actions.perform()
+                # Create an instance of ActionChains
+                actions = ActionChains(self.driver,duration=1000)
+                actions.send_keys(msg)
+                actions.send_keys(Keys.RETURN)
+                # Perform the actions
+                actions.perform()
 
-                    time.sleep(delay_time)
-                except:
-                    pass
+                time.sleep(delay_time)
+            except Exception as e:
+	            print("ERROR fel send dm : "+str(e))
         except:
             pass
 
     def comment_on_posts(self, links, comment, delay_time):
-        for link in links:
+        
             try:
                 cm =  random.choice(comment)
                 # Open each post link
-                self.driver.get(link)
+                self.driver.get(links)
                 time.sleep(2)
 
                 # Find the comment input field
@@ -181,11 +181,11 @@ class InstagramBot:
                 pass
 
     def like_stories(self, usernames, delay_time):
-        for username in usernames :
+        
             try:
                 
                 # Open Instagram and navigate to the user stories page
-                self.driver.get(f"https://www.instagram.com/stories/{username}/")
+                self.driver.get(f"https://www.instagram.com/stories/{usernames}/")
                 time.sleep(8)
    
                 # Wait for the stories to load
@@ -220,10 +220,10 @@ class InstagramBot:
                 pass
 
     def like_posts(self, links, delay_time):
-        for link in links :
+        
             try:
                 # Open posts
-                self.driver.get(link)
+                self.driver.get(links)
                 # Locate and click on the like button
                 like_button = self.driver.find_element(By.XPATH, '//div/div[3]/div[1]/div[1]/span[1]/div')
                 like_button.click()
@@ -232,12 +232,11 @@ class InstagramBot:
                 #print(f"Error occured while trying to access User \"{username}\" stories")
                 pass
 
-    def User_latest_post(self, usernames, delay_time):
-        users_liked_post_links = []
-        for username in usernames : 
-            try:
+    def User_latest_post(self, usernames, delay_time): 
+        latest_post = ""
+        try:
                 # Open Instagram and navigate to the user stories page
-                self.driver.get(f"https://www.instagram.com/{username}/")
+                self.driver.get(f"https://www.instagram.com/{usernames}/")
 
                 # Wait for the stories to load
                 wait = WebDriverWait(self.driver, 10)
@@ -268,10 +267,10 @@ class InstagramBot:
                     dates.append(dt.fromisoformat(time_string.split('.')[0]))
                 # Identify the latest post
                 latest_post = links[dates.index(max(dates))]
-                users_liked_post_links.append(latest_post)
-            except:
+                
+        except:
                 pass
-        return users_liked_post_links
+        return latest_post
 
     def quit(self):
         self.driver.quit()
