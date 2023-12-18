@@ -100,23 +100,23 @@ def main():
 
         for username in usernames:
 
-            latest_posts = []
+            latest_posts = ""
             if args.likelatestpost or args.comment:
                 latest_posts = bot.User_latest_post(usernames=username, delay_time=args.delay)
             
-            if args.dm:
-                print("dming user : " + username)
-                bot.send_dm(usernames=username, message=messages, delay_time=args.delay)
-
-            if args.likestories:
-                bot.like_stories(usernames=username, delay_time=args.delay)
-
             if args.likelatestpost:
                 bot.like_posts(links=latest_posts, delay_time=args.delay)
 
             if args.comment:
                 bot.comment_on_posts(links=latest_posts, comment=comment_msg, delay_time=args.delay)
 
+            if args.dm:
+                print("dming user : " + username)
+                bot.send_dm(usernames=username, message=messages, delay_time=args.delay)
+
+            if args.likestories:
+                bot.like_stories(usernames=username, delay_time=args.delay)
+                
         bot.quit()
 
 if __name__ == "__main__":

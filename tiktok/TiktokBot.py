@@ -40,56 +40,56 @@ class TiktokBot:
             print("user sessionid incorrect or expired !")
             self.quit()
 
-    def scrape_hashtag_posts(self, tag,DesiredVidsNumber):
-        print("getting tiktoks from hashtag...")
-        videos = []
-        try:
-            self.driver.get(f"https://www.tiktok.com/search/video?q=%23{tag}")
-            time.sleep(5)
+    # def scrape_hashtag_posts(self, tag,DesiredVidsNumber):
+    #     print("getting tiktoks from hashtag...")
+    #     videos = []
+    #     try:
+    #         self.driver.get(f"https://www.tiktok.com/search/video?q=%23{tag}")
+    #         time.sleep(5)
 
-            while True :
-                try :
-                    self.driver.find_element(By.ID,'verify-bar-close').click()
-                    self.driver.refresh()
-                except : 
-                    pass
-                self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-                time.sleep(3)
-                vlist=self.driver.find_elements(By.CLASS_NAME ,'e19c29qe10')
+    #         while True :
+    #             try :
+    #                 self.driver.find_element(By.ID,'verify-bar-close').click()
+    #                 self.driver.refresh()
+    #             except : 
+    #                 pass
+    #             self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+    #             time.sleep(3)
+    #             vlist=self.driver.find_elements(By.CLASS_NAME ,'e19c29qe10')
                 
-                for elem in vlist :
-                    if len(videos) == DesiredVidsNumber :
-                        print(f'{len(videos)} Videos selected for : {tag} ')
-                        return videos
-                    link=elem.find_element(By.CLASS_NAME,'e1cg0wnj1').find_element(By.TAG_NAME ,'a').get_attribute('href')
-                    print(link)
-                    videos.append(link)
-        except Exception as e:
-            print(f"An error occurred: {e}")
+    #             for elem in vlist :
+    #                 if len(videos) == DesiredVidsNumber :
+    #                     print(f'{len(videos)} Videos selected for : {tag} ')
+    #                     return videos
+    #                 link=elem.find_element(By.CLASS_NAME,'e1cg0wnj1').find_element(By.TAG_NAME ,'a').get_attribute('href')
+    #                 print(link)
+    #                 videos.append(link)
+    #     except Exception as e:
+    #         print(f"An error occurred: {e}")
     
-    def scrape_usernames(self, links):
-        print("getting usernames...")
-        usernames = []
-        for url in links:
-            try:
-                # Find the starting and ending indices for the username
-                start_index = url.find('@') + 1
-                end_index = url.find('/video/')
+    # def scrape_usernames(self, links):
+    #     print("getting usernames...")
+    #     usernames = []
+    #     for url in links:
+    #         try:
+    #             # Find the starting and ending indices for the username
+    #             start_index = url.find('@') + 1
+    #             end_index = url.find('/video/')
 
-                # Extract the username using slicing
-                if start_index != -1 and end_index != -1:
-                    username = url[start_index:end_index]
-                    usernames.append(username)
-            except Exception as e:
-                print(f"An error occurred: {e}")
-        # Remove duplicate usernames
-        usernames = list(set(usernames))
+    #             # Extract the username using slicing
+    #             if start_index != -1 and end_index != -1:
+    #                 username = url[start_index:end_index]
+    #                 usernames.append(username)
+    #         except Exception as e:
+    #             print(f"An error occurred: {e}")
+    #     # Remove duplicate usernames
+    #     usernames = list(set(usernames))
         
-        return usernames
+    #     return usernames
     
-    def send_dm(self, usernames, message, delay_time):
-            print("sending users dierect messages...")
-            for username in usernames:
+    def send_dm(self, username, message, delay_time):
+                print("sending users dierect messages...")
+            
                 try :
                     # Go to the Instagram Direct Inbox
                     self.driver.get(f"https://www.tiktok.com/@{username}")
@@ -117,9 +117,9 @@ class TiktokBot:
                 except Exception as e:
                     print(f"An error occurred: {e}")
     
-    def comment_on_posts(self, links, comment, delay_time):
-        print("commenting on users post...")
-        for link in links:
+    def comment_on_posts(self, link, comment, delay_time):
+            print("commenting on users post...")
+       
             try:
                 cm =  random.choice(comment)
                 # Open each post link
@@ -144,9 +144,9 @@ class TiktokBot:
             except Exception as e:
                 print(f"An error occurred: {e}")
 
-    def like_posts(self, links, delay_time):
-        print("liking posts...")
-        for link in links :
+    def like_posts(self, link, delay_time):
+            print("liking posts...")
+                
             try:
                 # Open posts
                 self.driver.get(link)
@@ -162,31 +162,25 @@ class TiktokBot:
             except Exception as e:
                 print(f"An error occurred: {e}")
     
-    def User_latest_post(self, usernames, delay_time):
-        users_liked_post_links = [] # //div[1]/div/div/a/div[2]/div/div
-        print("getting users post...")
-        for username in usernames : 
+    def User_latest_post(self, username, delay_time):
+            users_liked_post_links = ""
+            print("getting users post...")
             try:
                 # Open tiktok and navigate to the user stories page
                 self.driver.get(f"https://www.tiktok.com/@{username}/")
                 time.sleep(5)
                 wait = WebDriverWait(self.driver, 10)
                 wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="main-content-others_homepage"]/div/div[2]')))
-                #                                                //*[@id="main-content-others_homepage"]/div/div[2]/div[2]/div
+                
                 most_recent = self.driver.find_elements(By.CLASS_NAME, 'css-x6y88p-DivItemContainerV2')
                 nb_pinned = len(self.driver.find_elements(By.XPATH, '//div[1]/div/div/a/div[2]/div/div'))
-                # Scrape the most recent posts from the profile
-                # print(username)
-                # print(len(most_recent))
-                # print(nb_pinned)
-                # Retrieve the href attribute value
                 href = most_recent[nb_pinned].find_element(By.TAG_NAME, "a").get_attribute("href")
                 print(href)
-                users_liked_post_links.append(href)
+                users_liked_post_links = href
                 time.sleep(delay_time)
             except Exception as e:
                 print(f"An error occurred: {e}")
-        return users_liked_post_links
+            return users_liked_post_links
 
     def quit(self):
         print("Exist.")
