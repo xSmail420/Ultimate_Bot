@@ -27,11 +27,15 @@ class YoutubeBot:
 
 	def youtube_login(self, email, password):
 		self.driver.get('https://accounts.google.com/ServiceLogin?hl=en&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Fhl%3Den%26feature%3Dsign_in_button%26app%3Ddesktop%26action_handle_signin%3Dtrue%26next%3D%252F&uilel=3&passive=true&service=youtube#identifier')
-
+		
+		wait = WebDriverWait(self.driver, 30)
+		wait.until(EC.presence_of_element_located((By.ID, 'identifierId')))
+		
 		self.driver.find_element(By.ID, 'identifierId').send_keys(email)
 		self.driver.find_element(By.ID, 'identifierNext').click()
 		time.sleep(10)
 		#WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div#password input[name="password"]')))
+		wait.until(EC.presence_of_element_located((By.ID, 'passwordNext')))
 		self.driver.find_element(By.XPATH,'//*[@id="password"]/div[1]/div/div[1]/input').send_keys(password)
 		time.sleep(4)
 		self.driver.find_element(By.ID, 'passwordNext').click()
@@ -50,20 +54,24 @@ class YoutubeBot:
 		self.driver.implicitly_wait(1)
 
 		if not self.check_exists_by_xpath('//*[@id="movie_player"]'):
-			return comment_page(urls, comments)
+			return self.comment_page(urls, comments)
 		time.sleep(4)
 		self.driver.execute_script("window.scrollTo(0, 600);")
 		
 		if not self.check_exists_by_xpath('//*[@id="simple-box"]/ytd-comment-simplebox-renderer'):
-			return comment_page( urls, comments)
+			return self.comment_page( urls, comments)
 
 		if self.check_exists_by_xpath('//*[@id="contents"]/ytd-message-renderer'):
-			return comment_page( urls, comments)
+			return self.comment_page( urls, comments)
 
 		WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "ytd-comments ytd-comment-simplebox-renderer")))
 		time.sleep(4)
 		self.driver.find_element(By.CSS_SELECTOR , "ytd-comments ytd-comment-simplebox-renderer div#placeholder-area").click()
 		self.driver.implicitly_wait(5)
+
+		wait = WebDriverWait(self.driver, 10)
+		wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="contenteditable-root"]')))
+                
 		self.driver.find_element(By.XPATH,'//*[@id="contenteditable-root"]').send_keys(self.random_comment(comments))
 		self.driver.find_element(By.XPATH ,'//*[@id="contenteditable-root"]').send_keys(Keys.CONTROL, Keys.ENTER)
 
@@ -75,7 +83,7 @@ class YoutubeBot:
 		r = np.random.randint(2,5)
 		time.sleep(r)
 
-		return comment_page(urls,comments)
+		return self.comment_page(urls,comments)
 
 	def random_comment(self, comments):
 		return random.choice(comments)
@@ -87,9 +95,41 @@ class YoutubeBot:
 			return False
 		return True
 
-	def scrape_url_by_keyword(self, keyword, market, views=1000):
-		#TODO
-		return ['https://www.youtube.com/watch?v=Szww2_VqEKs&t']
+	def scrape_url_by_keyword(self, keyword, market, viewsMax, nb):
+		links = []
+		try:
+			self.driver.get(f"https://www.youtube.com/results?search_query={keyword}+{market}&sp=EgQIBBAB") #//ytd-video-renderer
+			
+			while (len(links) < nb):
+				print(f"{len(links)} links/{nb}")
+				time.sleep(5)
+				# Wait for the username element to load
+				wait = WebDriverWait(self.driver, 10)
+				wait.until(EC.presence_of_element_located((By.XPATH, '//ytd-video-renderer')))
+				videos = self.driver.find_elements(By.XPATH, '//ytd-video-renderer')
+				# Find elements with the specified tag name
+				for video in videos :
+					views = video.find_element(By.XPATH, ".//div[2]/span[1]").text
+					if (self.filter_views(views,viewsMax)):
+						links.append(video.find_element(By.XPATH, ".//ytd-thumbnail/a").get_attribute("href").replace("/shorts/", "/watch?v="))
+						links = list(set(links))
+				self.driver.find_element(By.TAG_NAME,'body').send_keys(Keys.END)
+
+		except:
+			pass
+		
+		return links
+
+	def filter_views(self ,objet, views):
+		valeur_en_nombre = self.convertir_en_nombre(objet)
+		return valeur_en_nombre < views
+	
+	def convertir_en_nombre(self ,valeur):
+		multiplicateurs = {'K': 1000, 'M': 1000000}
+		for suffixe, facteur in multiplicateurs.items():
+			if suffixe in valeur:
+				return float(valeur.replace(f'{suffixe} views', '')) * facteur
+		return float(valeur.replace(' views', ''))
 
 	def quit(self):
 		self.driver.quit()
